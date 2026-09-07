@@ -10,7 +10,6 @@
     redteam authz    --auth A [--target E]     inspect and test an authorization record
     redteam validate                           validate the research data in data/
     redteam init     [DIR]                     scaffold a config and authorization file
-    redteam arena-scrape [--arenas A...]       scrape your Arena submissions (pinned gs-submissions scraper)
 
 Exit codes are the contract with CI:
 
@@ -34,13 +33,10 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from .arena_scrape import DEFAULT_ARENAS, DEFAULT_OUT_DIR
 from .core.errors import AuthorizationError, ConfigError, PolicyViolation, RedTeamError
 from .core.redact import Redactor
 from .core.result import AttemptResult, Outcome, Risk, RunResult
 from .core.util import now_iso
-from .corpus_import import load_captured_conversations
-from .corpus_types import CorpusMessage
 from .detectors import DETECTORS
 from .orchestrators import ORCHESTRATORS, execute_run, prepare_run
 from .policy.authorization import Authorization, is_offline_endpoint
@@ -187,152 +183,6 @@ def build_parser() -> argparse.ArgumentParser:
     init = sub.add_parser("init", help="scaffold a config and authorization template")
     init.add_argument("directory", nargs="?", default=".", metavar="DIR")
     init.add_argument("--force", action="store_true", help="overwrite existing files")
-
-    corpus = sub.add_parser("corpus", help="operator corpus utilities")
-    corpus_sub = corpus.add_subparsers(dest="corpus_command", metavar="COMMAND")
-    imp = corpus_sub.add_parser(
-        "import", help="convert a captured message log into corpus.custom JSONL"
-    )
-    imp.add_argument(
-        "input", metavar="FILE",
-        help="generic conversation JSON/JSONL or a complete accepted Arena export",
-    )
-    imp.add_argument(
-        "--out", default="corpus.local.jsonl", metavar="FILE",
-        help="destination JSONL; must be *.local.jsonl (default: corpus.local.jsonl)",
-    )
-    imp.add_argument("--prefix", default="imported", help="entry id prefix (default: imported)")
-    imp.add_argument(
-        "--objective", default="",
-        help="objective recorded on every entry (default: operator-imported interaction)",
-    )
-    imp.add_argument(
-        "--seeded", default="",
-        help="what the operator's own prompts supplied; judge.llm uses this to "
-             "attribute compliance that goes beyond the seed",
-    )
-    imp.add_argument(
-        "--rubric", default="", metavar="FILE",
-        help="JSON file of {\"id\", \"description\"} criteria applied to every "
-             "imported entry; judge.llm scores each criterion",
-    )
-    imp.add_argument("--tags", default="", help="comma-separated tags for every entry")
-    imp.add_argument(
-        "--risk", default="high",
-        help="risk recorded on entries without their own (default: high)",
-    )
-    imp.add_argument(
-        "--redact", action="store_true",
-        help="redact credential/PII hits in the imported copy instead of aborting",
-    )
-    imp.add_argument(
-        "--force", action="store_true", help="append to an existing output file"
-    )
-
-    scrape = sub.add_parser(
-        "arena-scrape",
-        help="scrape your Gray Swan Arena submissions via the pinned gs-submissions scraper",
-        description=(
-            "Drive the pinned grayswan-scraper dependency (a logged-in Chrome "
-            "session against your authorized Arena account) and write the raw "
-            "submissions under the output directory.\n\n"
-            "Outputs land under arena/gs-scrape.local/ and contain FULL "
-            "conversations — engagement evidence, git-ignored, never commit "
-            "them. First live use is an operator smoke:\n"
-            "  uv run redteam arena-scrape --arenas hazard-hunt-q3 --max-submissions 2\n"
-            "then the convert-submissions step must resolve zero unknown names "
-            "before any bulk run. Requires a one-time "
-            "`uv run playwright install chromium`."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    scrape.add_argument(
-        "--arenas",
-        nargs="+",
-        default=DEFAULT_ARENAS,
-        metavar="ARENA",
-        help=f"arenas to scrape (default: {' '.join(DEFAULT_ARENAS)})",
-    )
-    scrape.add_argument(
-        "--out-dir",
-        default=str(DEFAULT_OUT_DIR),
-        metavar="DIR",
-        help="output directory, git-ignored by convention (default: arena/gs-scrape.local)",
-    )
-    scrape.add_argument(
-        "--max-submissions",
-        type=int,
-        default=None,
-        metavar="N",
-        help="stop each arena after N submissions (default: all)",
-    )
-    scrape.add_argument(
-        "--reauth",
-        action="store_true",
-        help="discard the saved browser state and log in again",
-    )
-    scrape.add_argument(
-        "--headed",
-        action="store_true",
-        help="show the browser window instead of running headless",
-    )
-    scrape.add_argument(
-        "--concurrency",
-        type=int,
-        default=5,
-        metavar="N",
-        help="parallel detail-page fetches (default: 5)",
-    )
-    scrape.add_argument(
-        "--delay-min",
-        type=float,
-        default=1.5,
-        metavar="S",
-        help="minimum delay between requests, seconds (default: 1.5)",
-    )
-    scrape.add_argument(
-        "--delay-max",
-        type=float,
-        default=3.0,
-        metavar="S",
-        help="maximum delay between requests, seconds (default: 3.0)",
-    )
-    scrape.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="debug-level scraper logging",
-    )
-    scrape.add_argument(
-        "--api-export",
-        action="store_true",
-        help=(
-            "fetch records via the Arena panels API instead of DOM scraping "
-            "(robust to UI changes; writes raw + enriched JSONL per arena)"
-        ),
-    )
-    scrape.add_argument(
-        "--challenge",
-        type=Path,
-        default=None,
-        metavar="JSON",
-        help="parse-challenge output used to resolve category/model/behavior "
-        "names during --api-export",
-    )
-    scrape.add_argument(
-        "--limit",
-        type=int,
-        default=100,
-        metavar="N",
-        help="page size for --api-export API pagination (default: 100)",
-    )
-    scrape.add_argument(
-        "--state-file",
-        type=Path,
-        default=None,
-        metavar="JSON",
-        help="explicit browser auth state JSON (default: <out-dir>/auth/browser_state.json)",
-    )
 
     return parser
 
@@ -808,197 +658,6 @@ def cmd_authz(args: argparse.Namespace) -> int:
     return EXIT_OK if all(c["allowed"] for c in checks) else EXIT_USAGE
 
 
-def cmd_corpus(args: argparse.Namespace) -> int:
-    return _corpus_import(args)
-
-
-def _corpus_import(args: argparse.Namespace) -> int:
-    """Convert a captured interaction log into corpus.custom JSONL entries.
-
-    The import path only reshapes what the operator already has: it never
-    authors prompts, and it applies the same credential/PII gate as every
-    artifact. The source path is never recorded in the output — entries carry
-    the id prefix, risk, and seeded text, nothing about where they came from.
-    """
-    from .probes.corpus import DEFAULT_CORPUS_DETECTORS, validate_rubric
-
-    source = Path(args.input)
-    if not source.is_file():
-        raise ConfigError(f"input file not found: {source}")
-
-    out = Path(args.out)
-    if not out.name.endswith(".local.jsonl"):
-        raise ConfigError(
-            f"{out}: the output must be named *.local.jsonl — that suffix is "
-            "git-ignored, and an imported corpus is exactly what must never "
-            "reach version control"
-        )
-    if out.exists() and not args.force:
-        raise ConfigError(
-            f"{out} already exists; pass --force to append to it"
-        )
-
-    conversations, accepts_empty = load_captured_conversations(source)
-    if not conversations and not accepts_empty:
-        raise ConfigError(f"{source}: no conversations found")
-
-    redactor = Redactor()
-    blocked: list[str] = []
-    redactions = 0
-    prepared: list[tuple[list[CorpusMessage], dict[str, str | bool]]] = []
-    for index, conversation in enumerate(conversations):
-        messages = conversation.as_messages()
-        for message in messages:
-            hits = redactor.scan(message["content"])
-            if not hits:
-                continue
-            if args.redact:
-                message["content"] = redactor.apply(message["content"])
-                redactions += len(hits)
-            else:
-                labels = ", ".join(f"{h.label} (line {h.line})" for h in hits[:3])
-                more = f" +{len(hits) - 3} more" if len(hits) > 3 else ""
-                blocked.append(f"conversation {index + 1}: {labels}{more}")
-        metadata: dict[str, str | bool] = dict(conversation.metadata())
-        for key, value in metadata.items():
-            if not isinstance(value, str):
-                continue
-            hits = redactor.scan(value)
-            if not hits:
-                continue
-            if args.redact:
-                metadata[key] = redactor.apply(value)
-                redactions += len(hits)
-            else:
-                labels = ", ".join(f"{hit.label} (line {hit.line})" for hit in hits[:3])
-                more = f" +{len(hits) - 3} more" if len(hits) > 3 else ""
-                blocked.append(
-                    f"conversation {index + 1} provenance {key}: {labels}{more}"
-                )
-        prepared.append((messages, metadata))
-    if blocked:
-        raise ConfigError(
-            "credential/PII patterns found in the captured log — values are "
-            "not shown:\n  "
-            + "\n  ".join(blocked)
-            + "\nRe-run with --redact to redact them in place, or clean the "
-            "source yourself."
-        )
-
-    tags = tuple(t.strip() for t in args.tags.split(",") if t.strip())
-    rubric: list[dict] = []
-    if args.rubric:
-        rubric_path = Path(args.rubric)
-        if not rubric_path.is_file():
-            raise ConfigError(f"rubric file not found: {rubric_path}")
-        try:
-            rubric_raw = json.loads(rubric_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            raise ConfigError(f"{rubric_path}: invalid JSON — {exc}") from None
-        rubric = validate_rubric(rubric_raw, str(rubric_path))
-    entry_objective = args.objective or "Operator-imported interaction (see corpus entry)"
-    start_index = 1
-    if out.exists():
-        for existing in out.read_text(encoding="utf-8").splitlines():
-            try:
-                entry_id = json.loads(existing).get("id", "")
-            except json.JSONDecodeError:
-                continue
-            if str(entry_id).startswith(f"{args.prefix}-"):
-                suffix = str(entry_id).rsplit("-", 1)[-1]
-                if suffix.isdigit():
-                    start_index = max(start_index, int(suffix) + 1)
-    lines: list[str] = []
-    for offset, (messages, metadata) in enumerate(prepared):
-        index = start_index + offset
-        entry: dict[str, object] = {
-            "id": f"{args.prefix}-{index:04d}",
-            "objective": entry_objective,
-            "messages": messages,
-            "risk": args.risk,
-            "technique": "imported interaction",
-            "detectors": list(DEFAULT_CORPUS_DETECTORS),
-            "expect": "refusal",
-        }
-        if args.seeded:
-            entry["seeded"] = args.seeded
-        if rubric:
-            entry["rubric"] = rubric
-        if tags:
-            entry["tags"] = list(tags)
-        if metadata:
-            entry["metadata"] = metadata
-        lines.append(json.dumps(entry, ensure_ascii=False))
-
-    mode = "a" if out.exists() and args.force else "w"
-    with out.open(mode, encoding="utf-8") as handle:
-        for line in lines:
-            handle.write(line + "\n")
-
-    turns = sum(len(messages) for messages, _ in prepared)
-    print(f"imported {len(conversations)} conversation(s), {turns} message(s) -> {out}")
-    if args.redact and redactions:
-        print(f"redacted {redactions} credential/PII hit(s) (--redact)")
-    print(
-        "run: redteam run --config c.json --auth a.json "
-        f"--probe corpus.custom --corpus {out}"
-    )
-    if args.seeded:
-        print("seeded specifics recorded; judge.llm will attribute beyond them")
-    return EXIT_OK
-
-
-def cmd_arena_scrape(args: argparse.Namespace) -> int:
-    """Scrape your Arena submissions via the pinned gs-submissions scraper.
-
-    The scraper is the framework's one runtime dependency and is imported
-    lazily here, so the rest of the CLI still runs on a bare interpreter.
-    Output lands under the (git-ignored) out-dir: full conversations plus the
-    browser auth state — engagement evidence, never commit it.
-    """
-    from .arena_scrape import ArenaScrapeError, api_export, run_scrape
-
-    try:
-        if getattr(args, "api_export", False):
-            results = api_export(
-                list(args.arenas),
-                out_dir=Path(args.out_dir),
-                challenge_path=args.challenge,
-                state_file=args.state_file,
-                headed=args.headed,
-                reauth=args.reauth,
-                limit=args.limit,
-                verbose=args.verbose,
-            )
-        else:
-            results = run_scrape(
-                list(args.arenas),
-                out_dir=Path(args.out_dir),
-                max_submissions=args.max_submissions,
-                reauth=args.reauth,
-                headed=args.headed,
-                concurrency=args.concurrency,
-                delay_min=args.delay_min,
-                delay_max=args.delay_max,
-                verbose=args.verbose,
-            )
-    except ArenaScrapeError as exc:
-        print(f"\narena-scrape failed: {exc}", file=sys.stderr)
-        return EXIT_USAGE
-
-    for arena, info in sorted(results.items()):
-        print(
-            f"{arena}: {info['submissions']} submission(s) -> "
-            f"{args.out_dir}/{arena}_submissions.jsonl"
-        )
-    print(f"scrape artifacts: {args.out_dir} (git-ignored; full conversations)")
-    print(
-        "next: python scripts/arena_capture.py convert-submissions "
-        f"{args.out_dir}/*_submissions.jsonl --challenge <challenge.json>"
-    )
-    return EXIT_OK
-
-
 def cmd_validate(args: argparse.Namespace) -> int:
     from .datacheck import ALL_CHECKS, load_dataset, run_all
     from .datacheck.loaders import DataLoadError
@@ -1131,8 +790,6 @@ COMMANDS = {
     "compare": cmd_compare,
     "scan": cmd_scan,
     "authz": cmd_authz,
-    "corpus": cmd_corpus,
-    "arena-scrape": cmd_arena_scrape,
     "validate": cmd_validate,
     "init": cmd_init,
 }

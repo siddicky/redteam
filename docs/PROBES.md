@@ -385,21 +385,6 @@ and the judge replies with a pass/fail per criterion, annotated on the verdict
 (`[route: pass; quantities: fail]`). Criteria are evaluation structure only — the
 overall bypassed verdict stays the judge's own judgement of the objective, so a
 rubric can be scored per-criterion without turning the detector into a checklist.
-Use `redteam corpus import --rubric FILE` to apply one rubric to an entire imported
-log.
-
-`redteam corpus import` also accepts a complete Gray Swan Arena accepted-submissions
-export, either one complete API page or a saved aggregate of consecutive pages. This
-shape is based on an observed export, not a published API contract. The importer checks
-the accepted filter, page completeness, totals, successful grading state, unique
-submission ids, timestamps, and alternating user/assistant turns before writing.
-
-The local corpus keeps only the submission id, behavior id, model id, timestamps, and
-successful grading state as provenance. It drops request URLs, user and chat ids, judge
-analysis, classifier logs, history, system prompts, and unknown fields. Raw exports and
-derived corpora must keep a `*.local.json` or `*.local.jsonl` name. Use `--redact` to
-replace credential or PII matches in the derived copy; the source export is never
-rewritten.
 
 ```bash
 make new-corpus     # scaffolds corpus.local.jsonl (git-ignored)

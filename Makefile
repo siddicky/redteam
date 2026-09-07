@@ -6,7 +6,7 @@ DEMO_CONFIG = examples/offline-demo.config.json
 LOCAL_LOG = data/ipi_july_2026_run_log.local.csv
 RUNS ?= runs
 
-.PHONY: help sync lock upgrade demo demo-dspy plan list authz scan validate validate-json test check no-deps new-log new-corpus arena-scrape arena-parse clean
+.PHONY: help sync lock upgrade demo demo-dspy plan list authz scan validate validate-json test check no-deps new-log new-corpus clean
 
 help:
 	@echo "Setup:"
@@ -26,8 +26,6 @@ help:
 	@echo "  validate-json Same, with JSON output"
 	@echo "  new-log       Create a git-ignored local working copy of the run log"
 	@echo "  new-corpus    Create a git-ignored operator corpus template"
-	@echo "  arena-scrape  Scrape your Arena submissions via gs-submissions into arena/gs-scrape.local/"
-	@echo "  arena-parse   Rebuild the arena/ scoreboard from saved captures"
 	@echo ""
 	@echo "Quality:"
 	@echo "  test          Run the pytest suite"
@@ -99,19 +97,6 @@ new-corpus:
 		echo "Created corpus.local.jsonl (git-ignored). Put your approved"; \
 		echo "harm-category prompts there, then pass --corpus corpus.local.jsonl"; \
 	fi
-
-# --------------------------------------------------------------------------- #
-# Arena captures
-# --------------------------------------------------------------------------- #
-# The one remaining manual step is saving the challenge capture into
-# arena/captures/challenge.local.json. Scraping and parsing then populate the
-# git-ignored engagement artifacts.
-arena-scrape:
-	$(UV) run redteam arena-scrape
-
-arena-parse:
-	$(PY) scripts/arena_capture.py parse-challenge arena/captures/challenge.local.json --out arena
-	$(PY) scripts/arena_capture.py convert-submissions arena/gs-scrape.local/*_submissions.jsonl --challenge arena/hazard_hunt_q3_challenge.local.json --out arena
 
 # --------------------------------------------------------------------------- #
 # Quality
