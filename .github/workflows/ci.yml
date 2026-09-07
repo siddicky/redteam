@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Fail rather than silently re-resolving: a stale lockfile in CI produces a run
+  # nobody can reproduce, which for a security tool is the whole problem.
+  UV_FROZEN: "1"
+
+jobs:
+  test:
+    name: test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.11/3.12: the pinned scraper's cookie dependency (rookiepy 0.5.6) ships no
+        # wheel for the next Python release and its sdist does not build; add that leg
+        # back when upstream releases support.
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the locked environment
+        run: uv sync --locked
+
+      - name: Test suite
+        run: uv run pytest
+
+  no-dependencies:
+    name: runs with nothing installed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      # --no-project installs nothing whatsoever. This fails the moment a third-party
+      # import creeps into the core CLI. The one pinned runtime dependency
+      # (grayswan-scraper) is reserved for the arena-scrape surface and is not
+      # imported here, so the core's no-install property stays checked, not asserted.
+      - name: Import and run with no packages installed
+        run: |
+          uv run --no-project --isolated python -c "import redteam; print('redteam', redteam.__version__)"
+          uv run --no-project --isolated python -m redteam list
+          uv run --no-project --isolated python -m redteam validate --strict
+
+  offline-demo:
+    name: offline demo (end to end)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      # The demo must work in a fresh clone with no credentials, or nobody will run it
+      # before pointing the tool at production. It exits non-zero by design: the
+      # simulated targets have real guardrail failures.
+      - name: Plan (sends nothing)
+        run: uv run --no-project --isolated python -m redteam plan --config examples/offline-demo.config.json
+
+      - name: Run against the offline simulator
+        run: |
+          uv run --no-project --isolated python -m redteam run \
+            --config examples/offline-demo.config.json \
+            --out runs --format json --format markdown --format sarif \
+            --quiet || true
+
+      - name: The demo must actually find the simulator's planted failures
+        run: |
+          uv run --no-project --isolated python - <<'PY'
+          import glob, json, sys
+          artifacts = glob.glob("runs/*.json")
+          if not artifacts:
+              sys.exit("no run artifact was written")
+          run = json.load(open(artifacts[0]))
+          counts = run["metrics"]["counts"]
+          bypassed, blocked = counts["bypassed"], counts["blocked"]
+          # Both halves matter. Findings prove the detectors fire; blocks prove they
+          # are not simply always firing.
+          if bypassed == 0:
+              sys.exit("detectors found nothing against a deliberately weak target")
+          if blocked == 0:
+              sys.exit("detectors fired on everything, including the hardened target")
+          print(f"OK: {bypassed} bypassed, {blocked} blocked")
+          PY
+
+      # Run artifacts contain payloads and whatever the target echoed back. Gate the
+      # upload on a clean scan, exactly as an operator should before sharing them.
+      - name: Credential and PII scan over the artifacts
+        run: uv run --no-project --isolated python -m redteam scan runs/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-demo-run
+          path: runs/
+          retention-days: 7
+
+  safety-invariants:
+    name: safety invariants
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv sync --locked
+
+      # Called out as its own job so a failure here is unmistakable in the checks
+      # list. These tests are the difference between a security tool and an
+      # unauthorized scanner.
+      - name: Authorization gate
+        run: uv run pytest tests/framework/test_authorization.py
+
+      - name: Repository safety invariants
+        run: uv run pytest tests/framework/test_safety_invariants.py
+
+      - name: Research data validation (strict)
+        run: uv run python -m redteam validate --strict

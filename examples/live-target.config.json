@@ -1,0 +1,70 @@
+{
+  "seed": "2026-Q3-staging-guardrail-eval",
+  "orchestrator": "sweep",
+
+  "targets": [
+    {
+      "id": "model-direct",
+      "plugin": "http.openai_compat",
+      "options": {
+        "url": "https://llm.staging.internal.example.com/v1/chat/completions",
+        "model": "assistant-v3",
+        "api_key": "${env:INTERNAL_LLM_KEY}",
+        "temperature": 0.0,
+        "max_tokens": 1024
+      },
+      "tags": ["raw-model"]
+    },
+
+    {
+      "id": "support-app",
+      "plugin": "http.generic",
+      "options": {
+        "url": "https://support.staging.internal.example.com/api/assistant",
+        "request_template": {
+          "conversation": "{{messages_json}}",
+          "channel": "web",
+          "trace": "redteam"
+        },
+        "response_path": "data.reply.text",
+        "tool_calls_path": "data.reply.actions",
+        "api_key": "${env:SUPPORT_APP_TOKEN}",
+        "api_key_header": "X-Service-Token",
+        "api_key_prefix": ""
+      },
+      "tags": ["application"]
+    },
+
+    {
+      "id": "coding-agent",
+      "plugin": "exec.command",
+      "options": {
+        "command": ["python", "-m", "support_agent", "--json"],
+        "input_format": "json",
+        "output_format": "json",
+        "response_path": "output",
+        "tool_calls_path": "tool_calls",
+        "timeout": 120
+      },
+      "tags": ["agent"]
+    }
+  ],
+
+  "probes": ["indirect", "direct", "leak", "agency", "exfil", "obfuscation", "output"],
+  "transforms": ["identity", "encoding.base64", "unicode.zero_width", "wrap.markdown_comment"],
+
+  "max_attempts": 400,
+  "requests_per_minute": 20,
+  "concurrency": 2,
+  "timeout": 60,
+
+  "fail_on": "high",
+  "min_risk": null,
+
+  "redact_artifacts": true,
+  "include_payload_text": true,
+  "include_raw_responses": false,
+
+  "output_dir": "runs",
+  "formats": ["json", "markdown", "html", "sarif"]
+}

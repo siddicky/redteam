@@ -1,0 +1,62 @@
+{
+  "schema": "redteam.arena.contract/1",
+  "capturedAt": "2026-09-01T12:00:00Z",
+  "origin": "https://arena.invalid",
+  "readMethod": null,
+  "readPathTemplate": null,
+  "readResponseFields": [],
+  "pollMethod": null,
+  "pollPathTemplate": null,
+  "pollResponseFields": [],
+  "gradingMethod": "POST",
+  "gradingPathTemplate": "/api/compete/submit-stream",
+  "gradingQueryKeys": [],
+  "gradingBodyFields": [
+    {
+      "name": "chat_id",
+      "scalarType": "string",
+      "valueMode": "dynamic",
+      "fixedValue": null
+    },
+    {
+      "name": "judging_type",
+      "scalarType": "string",
+      "valueMode": "fixed",
+      "fixedValue": "break"
+    },
+    {
+      "name": "submission_target",
+      "scalarType": "string",
+      "valueMode": "fixed",
+      "fixedValue": "ai"
+    }
+  ],
+  "gradingSseEvents": [
+    {
+      "name": "submission_created",
+      "repeatable": false,
+      "indexField": null,
+      "fields": ["submission_id"]
+    },
+    {
+      "name": "judge_result",
+      "repeatable": true,
+      "indexField": "index",
+      "fields": ["index", "result"]
+    },
+    {
+      "name": "complete",
+      "repeatable": false,
+      "indexField": null,
+      "fields": ["successful", "grade_status", "judges", "criteria_config"]
+    }
+  ],
+  "terminalMappings": [
+    {"rawStatus": "success", "outcome": "success"},
+    {"rawStatus": "fail", "outcome": "unsuccessful"}
+  ],
+  "scoreDisplay": {"mode": "unknown", "mapping": null},
+  "idempotencyField": null,
+  "automaticRetry": false,
+  "reconciliationPolicy": "read_only_no_retry"
+}

@@ -1,0 +1,28 @@
+catalog_order,slug,title,status_2026_09_03,prize_usd,public_coverage,notes
+1,ipi-july-2026,Indirect Prompt Injection July '26,completed,20000,none,ended 2026-08-03; all 20000 awarded per challenge page
+2,onboarding-quest-1,The Labyrinth (Training Quest #1),ongoing_practice,0,video_general,formerly Getting Started Quest #1; rebranded; beginner video walkthrough available
+3,labyrinth-challenge-version,The Labyrinth: Challenge Version,completed,0,probable_participant_writeup,prisoner/guard post does not explicitly name challenge
+4,ipi-june-2026,Indirect Prompt Injection June '26,completed,22000,none,
+5,cyber-bypass,Cyber Bypass,completed,50000,participant_mini_writeup,public LinkedIn result post
+6,ipi-q2-2026,Indirect Prompt Injection Q2 2026,completed,20000,participant_synthesis,not procedural
+7,human-browser-agent-robustness,Human / Browser Agent Robustness,completed,100004,participant_synthesis,not procedural
+8,ipi-q1-26-bonus-wave,Indirect Prompt Injection Bonus Wave,completed,5500,none,
+9,staged-attack,Staged Attack,completed,40000,adjacent_only,no direct Arena walkthrough located
+10,indirect-prompt-injection-q1-2026,Indirect Prompt Injection Q1 2026,completed,40000,paper_update_planned,current IPI paper says Q1 update in progress
+11,safeguards,Safeguards,completed,140000,participant_synthesis,not procedural
+12,indirect-prompt-injection,Indirect Prompt Injection,completed,40000,extensive,November 2025 challenge
+13,machine-in-the-middle,Machine-in-the-Middle,completed_closed,100000,none,
+14,def-con-33,DEF CON 33,completed,1000,none,
+15,proving-ground,Proving Ground,ongoing_practice,0,multiple,official Wave 4 plus participant Waves 13 and 23
+16,dangerous-reasoning,Dangerous Reasoning,completed,20000,official_recap_and_paper,
+17,visual-vulnerabilities,Visual Vulnerabilities,completed,60000,official_recap,
+18,agent-red-teaming,Agent Red-Teaming,completed,171800,extensive,official recaps paper and videos
+19,harmful-ai-assistant,Harmful AI Assistant,completed,40000,participant_writeup_and_system_card,
+20,multi-turn-harmful-outputs,Multi-Turn Harmful Outputs,completed,7000,system_card,no participant walkthrough located
+21,multimodal-jailbreaks,Multimodal Jailbreaks,completed,6000,system_card,no participant walkthrough located
+22,harmful-code-generation,Harmful Code Generation,completed,6000,system_card,no participant walkthrough located
+23,revealing-chain-of-thought,Revealing Hidden Chain of Thought,completed,1000,launch_recap,no participant walkthrough located
+24,single-turn-harmful-outputs,Single Turn Harmful Outputs,completed,42000,launch_recap_and_system_card,
+25,hazard-hunt-q3,"Hazard Hunt: Chem, Bio, Cyber, Misc",ongoing,80000,none_current_event,Direct-elicitation challenge 2026-08-25 to 2026-09-11; field kit in HAZARD_HUNT_PLAYBOOK.md
+26,ipi-aug-2026,Indirect Prompt Injection August '26,completed,30000,none,all 30000 awarded; largest IPI pool to date
+27,ipi-lucky-break-aug,IPI Lucky Break,completed,5000,none,week-long revamped Proving Ground raffle; five ticket cap

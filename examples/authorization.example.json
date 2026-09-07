@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "engagement": "Q3 2026 internal LLM guardrail assessment — staging assistant",
+  "authorized_by": "A. Reviewer, Head of Security Engineering",
+  "reference": "SEC-1421",
+  "issued": "2026-07-28",
+  "expires": "2026-08-28",
+  "scope": {
+    "targets": [
+      "mock:*",
+      "replay:*",
+      "http://localhost:*",
+      "http://127.0.0.1:*",
+      "https://llm.staging.internal.example.com/*",
+      "exec:./bin/support-agent"
+    ],
+    "max_attempts": 500,
+    "max_requests_per_minute": 30,
+    "max_concurrency": 4,
+    "deny": []
+  },
+  "acknowledgements": {
+    "authorized": true,
+    "rules_of_engagement_reviewed": true
+  },
+  "contacts": {
+    "escalation": "secops@example.com",
+    "on_call": "+00 000 000 0000"
+  },
+  "notes": "Staging only. Production endpoints are explicitly out of scope for this engagement. Stop and notify the escalation contact if any target returns customer data."
+}

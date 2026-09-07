@@ -1,0 +1,27 @@
+{
+  "seed": "compile-offline",
+  "orchestrator": "dspy.redteamer",
+  "orchestrator_options": {
+    "attack_model": {
+      "id": "offline-attacker",
+      "plugin": "dspy.stub",
+      "options": {}
+    },
+    "layers": 2,
+    "demos": 0
+  },
+  "targets": [
+    {
+      "id": "vulnerable-sut",
+      "plugin": "mock.llm",
+      "options": { "profile": "vulnerable" }
+    }
+  ],
+  "probes": ["direct.instruction_override", "indirect.document"],
+  "transforms": ["identity"],
+  "max_attempts": 1000,
+  "requests_per_minute": 0,
+  "concurrency": 1,
+  "output_dir": "runs",
+  "formats": ["json"]
+}

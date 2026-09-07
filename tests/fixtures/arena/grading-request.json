@@ -1,0 +1,11 @@
+{
+  "origin": "https://arena.invalid",
+  "method": "POST",
+  "path": "/api/compete/submit-stream",
+  "query": {},
+  "json": {
+    "chat_id": "submission-inert-001",
+    "judging_type": "break",
+    "submission_target": "ai"
+  }
+}

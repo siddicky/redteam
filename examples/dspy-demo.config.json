@@ -1,0 +1,33 @@
+{
+  "seed": "dspy-offline-demo",
+  "orchestrator": "dspy.redteamer",
+  "orchestrator_options": {
+    "attack_model": {
+      "id": "attacker",
+      "plugin": "dspy.stub",
+      "options": {}
+    },
+    "layers": 2,
+    "program": ""
+  },
+  "targets": [
+    {
+      "id": "hardened-wrapper",
+      "plugin": "mock.llm",
+      "options": { "profile": "hardened", "refusal_style": "detected" }
+    },
+    {
+      "id": "vulnerable-assistant",
+      "plugin": "mock.llm",
+      "options": { "profile": "vulnerable" }
+    }
+  ],
+  "probes": ["indirect.document", "direct.instruction_override"],
+  "transforms": ["identity"],
+  "max_attempts": 100,
+  "requests_per_minute": 0,
+  "concurrency": 2,
+  "fail_on": "critical",
+  "output_dir": "runs",
+  "formats": ["json", "markdown"]
+}

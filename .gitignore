@@ -1,0 +1,65 @@
+# --------------------------------------------------------------------------- #
+# Red-team run artifacts
+# --------------------------------------------------------------------------- #
+# A run artifact contains full attack payloads plus whatever the target echoed
+# back, which on a real engagement can include credentials it was holding or
+# customer data. It is engagement evidence, not source. Attach it to the ticket
+# that authorized the work; do not commit it.
+runs/
+*.run.json
+*.run.jsonl
+*.sarif
+
+# Authorization records name systems, people, and escalation contacts. Keep the
+# signed record with the engagement paperwork; commit only the example.
+authorization.json
+!examples/authorization.example.json
+
+# The init-scaffolded engagement config points at the operator's systems and
+# references their local corpus. Same class of local artifact as the record.
+redteam.config.json
+
+# Operator-supplied probe corpora (harm-category prompts, licensed benchmark
+# sets). These are exactly what must not reach a public repository.
+*.local.jsonl
+*.local.json
+
+# Local engagement working docs (counter payloads, per-target playbooks).
+# Same class of engagement evidence as the corpora above.
+*.local.md
+*.local.py
+
+# Local agent-state directories. Project-scoped skills remain committable
+# (ignore children, not the dir itself, so the negation can apply).
+.omc/*
+.omo/
+!.omc/skills/
+
+# --------------------------------------------------------------------------- #
+# Private research working logs
+# --------------------------------------------------------------------------- #
+# Populated run logs must NOT be committed. Store full payload text here; commit
+# only the blank template. Enforced by the safety.gitignore and
+# safety.run_log_blank checks in redteam.datacheck.
+*.local.csv
+data/*.local.csv
+
+# Full jailbreak conversations + Chrome session cookies — engagement evidence,
+# never commit.
+arena/gs-scrape.local/
+
+# --------------------------------------------------------------------------- #
+# Python
+# --------------------------------------------------------------------------- #
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.coverage
+htmlcov/

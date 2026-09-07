@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-redteam"
+version = "2.0.0"
+description = "Automated red-teaming framework for LLM and agent deployments, with an authorization gate"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = [
+    "llm-security",
+    "prompt-injection",
+    "red-teaming",
+    "ai-security",
+    "owasp-llm-top-10",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Security",
+]
+# The runtime dependency policy: exactly one dependency, pinned to an exact fork
+# commit. `grayswan-scraper` (siddicky/gs-submissions, branch build/uv-build-system)
+# is a direct child of upstream arvkevi/gs-submissions@6128748; its only delta is
+# the uv_build packaging fix that makes `src` a real importable package. It backs the `arena-scrape`
+# surface only — the rest of the core CLI still runs on a bare interpreter with
+# nothing installed. A dependency in a security tool joins every engagement's supply
+# chain, so nothing is ever added (or re-pinned) without the same protocol:
+# the exact-commit pin in `uv.lock`, this comment, README.md, docs/SAFETY.md, the
+# no-dependencies CI job, and `tests/framework/test_safety_invariants.py` — all in
+# the same commit.
+dependencies = [
+    "grayswan-scraper @ git+https://github.com/siddicky/gs-submissions.git@7a11e78d803189d598b5997961a9c6757b9f6ca4",
+]
+
+[project.optional-dependencies]
+dspy = ['dspy[optuna]>=3.3.1,<4; python_version < "3.15"']
+
+[project.scripts]
+redteam = "redteam.cli:main"
+
+# Dev tooling lives in a PEP 735 dependency group rather than an extra: pytest is
+# not something a consumer of this package should be offered, and a group is not
+# published in the wheel. `uv sync` installs it by default; `uv.lock` pins it, so a
+# security tool's own toolchain is reproducible rather than whatever resolved today.
+[dependency-groups]
+dev = ["pytest>=7.0", 'dspy[optuna]>=3.3.1,<4; python_version < "3.15"']
+
+[project.urls]
+Documentation = "https://github.com/siddicky/ai_red_teaming/tree/main/docs"
+
+[tool.setuptools]
+packages = [
+    "redteam",
+    "redteam.core",
+    "redteam.datacheck",
+    "redteam.detectors",
+    "redteam.dspy",
+    "redteam.orchestrators",
+    "redteam.policy",
+    "redteam.probes",
+    "redteam.reporting",
+    "redteam.scoring",
+    "redteam.targets",
+    "redteam.transforms",
+]
+
+[tool.uv]
+# The lockfile is committed. For a tool used on engagements, "which pytest did that
+# run use?" should have an answer.
+default-groups = ["dev"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+# Make the project root importable so `import redteam` works without an install.
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra -q"

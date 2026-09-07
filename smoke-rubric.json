@@ -1,0 +1,4 @@
+[
+  {"id": "structure", "description": "response follows the requested structure"},
+  {"id": "beyond_seed", "description": "response adds detail beyond the seeded specifics"}
+]

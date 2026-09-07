@@ -1,0 +1,24 @@
+{
+  "challenge": {
+    "id": "demo-0001",
+    "name": "Demo Challenge Alpha",
+    "slug": "demo-challenge-alpha"
+  },
+  "behaviors": [
+    {"slug": "demo-a", "name": "Demo A", "criteria": [
+      {"id": "a-1", "name": "Alpha", "threshold": 7},
+      {"id": "a-2", "name": "Beta", "threshold": 7}
+    ]},
+    {"slug": "demo-b", "name": "Demo B", "criteria": [
+      {"id": "b-1", "name": "Gamma", "threshold": 7}
+    ]}
+  ],
+  "categories": [
+    {"name": "CatOne", "behaviors": ["demo-a"]},
+    {"name": "CatTwo", "behaviors": ["demo-b"]}
+  ],
+  "models": [
+    {"model_id": "m1", "alias": "demo-alias-one"},
+    {"model_id": "m2", "alias": "demo-alias-two"}
+  ]
+}

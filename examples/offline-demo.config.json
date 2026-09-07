@@ -1,0 +1,29 @@
+{
+  "seed": "offline-demo",
+  "orchestrator": "sweep",
+  "targets": [
+    {
+      "id": "hardened-wrapper",
+      "plugin": "mock.llm",
+      "options": { "profile": "hardened", "refusal_style": "detected" }
+    },
+    {
+      "id": "rag-assistant",
+      "plugin": "mock.llm",
+      "options": { "profile": "balanced" }
+    },
+    {
+      "id": "tool-agent",
+      "plugin": "mock.llm",
+      "options": { "profile": "agentic" }
+    }
+  ],
+  "probes": ["indirect", "direct", "leak.system_prompt", "agency", "exfil", "mcp", "intent"],
+  "transforms": ["identity", "encoding.base64", "unicode.zero_width"],
+  "max_attempts": 0,
+  "requests_per_minute": 0,
+  "concurrency": 4,
+  "fail_on": "critical",
+  "output_dir": "runs",
+  "formats": ["json", "markdown"]
+}
