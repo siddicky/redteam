@@ -53,9 +53,8 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       # --no-project installs nothing whatsoever. This fails the moment a third-party
-      # import creeps into the core CLI. The one pinned runtime dependency
-      # (grayswan-scraper) is reserved for the arena-scrape surface and is not
-      # imported here, so the core's no-install property stays checked, not asserted.
+      # import creeps into the core CLI. The package declares zero runtime
+      # dependencies, so the core's no-install property stays checked, not asserted.
       - name: Import and run with no packages installed
         run: |
           uv run --no-project --isolated python -c "import redteam; print('redteam', redteam.__version__)"

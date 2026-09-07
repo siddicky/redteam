@@ -6,11 +6,11 @@
 An automated red-teaming framework (`redteam`, distributed as `ai-redteam`) that
 fires a corpus of attack techniques at an LLM or agent deployment you are
 **authorized to test**, decides for each attempt whether the guardrail held, and
-produces a report naming the rule that broke. Exactly one pinned runtime dependency
-(`grayswan-scraper`, arena scraping only) — the core CLI still runs on a bare
-interpreter. Every live target must be covered by an authorization record; the
-authorization gate (`redteam/policy`) is the primary safety interlock. Offline
-targets (the `mock`/`replay` simulators) run without authorization.
+produces a report naming the rule that broke. Zero runtime dependencies — the core
+CLI runs on a bare interpreter. Every live target must be covered by an
+authorization record; the authorization gate (`redteam/policy`) is the primary
+safety interlock. Offline targets (the `mock`/`replay` simulators) run without
+authorization.
 
 This documentation describes the framework's architecture. It intentionally does
 **not** reproduce attack payloads, jailbreak content, or harmful procedural
@@ -20,7 +20,7 @@ built to redact and sentinel-substitute such content on the way to disk.
 ## Key Files
 | File | Description |
 |------|-------------|
-| `pyproject.toml` | Package metadata, `redteam` console script, the single pinned `grayswan-scraper` runtime dependency (enforced by a test), PEP 735 dev group |
+| `pyproject.toml` | Package metadata, `redteam` console script, zero runtime dependencies (enforced by a test), PEP 735 dev group |
 | `Makefile` | Common developer entry points (`make test`, `make lint`) |
 | `README.md` | User-facing overview: what it does, the offline demo, sample output |
 | `uv.lock` | Committed lockfile — pins the dev toolchain for reproducible engagement runs |
@@ -41,13 +41,12 @@ built to redact and sentinel-substitute such content on the way to disk.
 ## For AI Agents
 
 ### Working In This Directory
-- **The runtime dependency list stays exactly one pinned entry.**
-  `tests/framework/test_safety_invariants.py` asserts `dependencies` equals the
-  pinned `grayswan-scraper` git requirement and `requires-python` stays `>=3.11`.
-  The scraper is imported lazily, by the arena-scrape surface only; add no runtime
-  import or dependency outside that single pin without the same-commit protocol
-  (pin + `uv.lock`, README, docs/SAFETY.md, CI job, this policy). Dev-only tooling
-  goes in the `dev` dependency group.
+- **The runtime dependency list stays exactly empty.**
+  `tests/framework/test_safety_invariants.py` asserts `dependencies` equals `[]`
+  and `requires-python` stays `>=3.11`. The core CLI runs on a bare interpreter;
+  add no runtime import or dependency without the same-commit protocol
+  (entry in `uv.lock`, pyproject policy comment, README, docs/SAFETY.md, CI job,
+  this policy). Dev-only tooling goes in the `dev` dependency group.
 - Never weaken the authorization gate, the redaction boundary, or the sentinel
   substitution. These are safety invariants covered by dedicated tests
   (`test_safety_invariants.py` in both test suites).
@@ -72,10 +71,8 @@ built to redact and sentinel-substitute such content on the way to disk.
 ## Dependencies
 
 ### External
-- `grayswan-scraper` — the single runtime dependency: an exact-commit git pin of
-  the owner fork `siddicky/gs-submissions` (build/uv-build-system, child of
-  upstream `arvkevi/gs-submissions`@6128748, packaging fix only) backing
-  `arena-scrape`; the core CLI runs without it.
+- Zero runtime dependencies: the core CLI runs on the standard library alone, and
+  `tests/framework/test_safety_invariants.py` enforces the empty list.
 - `pytest` (dev group) — test runner.
 - `ruff` — linting.
 - `uv` — environment and reproducibility.

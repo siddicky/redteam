@@ -27,7 +27,7 @@ project's core invariants on every push and pull request, not just the test suit
 
 ### Common Patterns
 - Jobs run on the locked toolchain; the `no-dependencies` job proves the core CLI
-  runs bare (the pinned `grayswan-scraper` dependency is arena-scrape-only).
+  runs bare (the package declares zero runtime dependencies).
 
 ## Dependencies
 

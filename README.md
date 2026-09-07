@@ -6,12 +6,7 @@ guardrail held, and produces a report that names the rule that broke and how to 
 it.
 
 The core CLI runs on the standard library alone — bare `python -m redteam` needs
-nothing installed. Exactly one runtime dependency exists: `grayswan-scraper`
-(siddicky/gs-submissions, branch `build/uv-build-system`, pinned to an exact fork
-commit in `pyproject.toml` and `uv.lock`; a direct child of upstream
-`arvkevi/gs-submissions@6128748` with only the uv_build packaging fix), which backs
-the `arena-scrape` command; it drives a real browser, so
-plan a one-time `uv run playwright install chromium` before the first scrape. An
+nothing installed, and the package declares zero runtime dependencies. An
 optional `dspy` extra adds DSPy support without changing bare `python -m redteam`;
 it follows DSPy's supported interpreter range (currently Python <3.15).
 
@@ -172,8 +167,8 @@ Or via `make`: `make sync`, `make demo`, `make plan`, `make list`, `make authz`,
 `make check`.
 
 **No install is also a supported path.** The core CLI imports nothing beyond the
-standard library: the pinned `grayswan-scraper` dependency is used only by
-`arena-scrape`. `python -m redteam ...` works against a bare Python 3.11+ with
+standard library and the package declares zero runtime dependencies.
+`python -m redteam ...` works against a bare Python 3.11+ with
 nothing installed — useful on a jump host you would rather not add packages to. CI
 proves it on every push, and `make no-deps` proves it locally:
 
@@ -241,7 +236,6 @@ anything is sent.
 | `redteam report RUN.json` | Re-render a saved run in another format. |
 | `redteam compare A.json B.json` | Diff two runs; exits 1 on a regression. |
 | `redteam scan PATH...` | Credential and PII scan before sharing anything. |
-| `redteam corpus import LOG` | Convert generic conversation JSON/JSONL or a complete accepted Arena export into local `corpus.custom` JSONL. |
 | `redteam authz --auth A` | Inspect a record, test endpoints against it. |
 | `redteam validate` | Validate the research compilation in `data/`. |
 | `redteam init [DIR]` | Scaffold a config and an authorization template. |
@@ -380,20 +374,18 @@ make check                     # validate + full suite + core-CLI no-install che
 uv run pytest tests/framework  # just the framework tests
 ```
 
-Dependencies live in `pyproject.toml` — exactly one pinned runtime dependency
-(`grayswan-scraper`, an exact-commit git pin used only by `arena-scrape`), the sole
+Dependencies live in `pyproject.toml` — zero runtime dependencies, the sole
 published `dspy` optional extra, and a PEP 735 `dev` group holding pytest and the
 same DSPy requirement — and `uv.lock` is committed. The core CLI keeps its
 no-install property; the optional extra follows DSPy's supported interpreter range
 (currently Python <3.15). After changing either, run `make lock`. `uv sync --locked`
 and CI both fail on a stale lockfile.
 
-Python 3.13 is not yet supported for the arena-scrape dependency chain; the core CLI is unaffected.
-
 `tests/framework/test_safety_invariants.py` asserts `project.dependencies` stays
-exactly that one pinned git requirement and the published-extra list stays
-dspy-only. If the pin or an extra ever changes, that test fails and the README,
-`docs/SAFETY.md`, and the no-dependencies CI job have to change in the same commit.
+exactly empty and the published-extra list stays dspy-only. If a dependency or an
+extra ever appears, that test fails and the README, `docs/SAFETY.md`, the
+pyproject dependency-policy comment, and the no-dependencies CI job have to change
+in the same commit.
 
 The suite covers the framework and the research data. Two groups are load-bearing and
 should not be weakened without a replacement:

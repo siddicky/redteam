@@ -32,8 +32,8 @@ include a `test_safety_invariants.py` that guards the framework's safety propert
   importable without installation. `testpaths` is set to `tests`.
 
 ### Common Patterns
-- Tests are standard-library + pytest only; the pinned `grayswan-scraper` dependency
-  is never imported by the suites.
+- Tests are standard-library + pytest only; the suites import no third-party
+  runtime dependency (the package declares none).
 
 ## Dependencies
 

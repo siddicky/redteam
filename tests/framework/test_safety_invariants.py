@@ -288,7 +288,7 @@ def _pyproject() -> dict:
 
     The interpreter floor is 3.11, so the stdlib ``tomllib`` is always present —
     no fallback needed. These are the invariants that keep the runtime dependency
-    surface a single, deliberate, pinned requirement.
+    surface empty by default.
     """
     import tomllib
 
@@ -299,43 +299,28 @@ def _optional_extras_ok(optional_dependencies: Mapping[str, list[str]]) -> bool:
     return set(optional_dependencies) <= {"dspy"}
 
 
-# The one allowed runtime dependency, pinned to an exact commit of the owner's fork
-# scraper. Anything else joins every engagement's supply chain and is refused here.
-PINNED_SCRAPER_REQUIREMENT = (
-    "grayswan-scraper @ git+https://github.com/siddicky/gs-submissions.git"
-    "@7a11e78d803189d598b5997961a9c6757b9f6ca4"
-)
+def test_the_framework_declares_zero_runtime_dependencies():
+    """The runtime dependency list is exactly empty.
 
-
-def _normalize_requirement(requirement: str) -> str:
-    """Collapse whitespace so equivalent requirement strings compare equal."""
-    return " ".join(requirement.split())
-
-
-def test_the_framework_declares_exactly_one_pinned_runtime_dependency():
-    """The runtime dependency list is exactly the pinned grayswan-scraper requirement.
-
-    The scraper is imported lazily by the arena-scrape surface only; the rest of the
-    core CLI still runs on a bare interpreter. Asserting the exact requirement here
-    means adding another dependency — or re-pinning this one — is a deliberate act
-    with a failing test attached, rather than something that slips in with a feature.
+    The core CLI runs on the standard library alone, so a bare ``python -m
+    redteam`` works with nothing installed. Asserting the exact empty list here
+    means adding a dependency is a deliberate act with a failing test attached,
+    rather than something that slips in with a feature.
     """
     project = _pyproject()["project"]
-    dependencies = [
-        _normalize_requirement(r) for r in project.get("dependencies", [])
-    ]
+    dependencies = project.get("dependencies", [])
     optional_dependencies = project.get("optional-dependencies", {})
     deliberate_change_message = (
-        "If the pinned requirement or an extra changes, update README.md, "
-        "docs/SAFETY.md, and the no-dependencies CI job in the same change."
+        "If the dependency list or an extra changes, update README.md, "
+        "docs/SAFETY.md, the dependency-policy comment in pyproject.toml, "
+        "and the no-dependencies CI job in the same change."
     )
-    assert dependencies == [PINNED_SCRAPER_REQUIREMENT], (
-        f"the framework's runtime dependencies must be exactly "
-        f"{PINNED_SCRAPER_REQUIREMENT!r}; found {dependencies}. "
+    assert dependencies == [], (
+        f"the framework ships zero runtime dependencies; found {dependencies}. "
         f"{deliberate_change_message}"
     )
     assert project.get("requires-python") == ">=3.11", (
-        f"requires-python must be '>=3.11' (the pinned scraper's floor); found "
+        f"requires-python must be '>=3.11'; found "
         f"{project.get('requires-python')!r}. {deliberate_change_message}"
     )
     assert _optional_extras_ok(optional_dependencies), (

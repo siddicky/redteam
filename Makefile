@@ -105,13 +105,13 @@ test:
 	$(UV) run pytest
 
 # --no-project installs nothing at all, so this fails the moment a third-party import
-# creeps into the core CLI. The single pinned runtime dependency (grayswan-scraper)
-# backs the arena-scrape surface only; every other command still runs on a bare
-# interpreter, and that property is checked here rather than asserted.
+# creeps into the core CLI. The package declares zero runtime dependencies; every
+# command runs on a bare interpreter, and that property is checked here rather than
+# asserted.
 no-deps:
 	$(UV) run --no-project --isolated python -m redteam list >/dev/null
 	$(UV) run --no-project --isolated python -m redteam validate --strict
-	@echo "OK: the core CLI runs with no packages installed (the pinned grayswan-scraper dep is arena-scrape-only)"
+	@echo "OK: the core CLI runs with no packages installed (zero runtime dependencies)"
 
 check: validate test no-deps
 

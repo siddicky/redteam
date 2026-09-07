@@ -23,19 +23,13 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Security",
 ]
-# The runtime dependency policy: exactly one dependency, pinned to an exact fork
-# commit. `grayswan-scraper` (siddicky/gs-submissions, branch build/uv-build-system)
-# is a direct child of upstream arvkevi/gs-submissions@6128748; its only delta is
-# the uv_build packaging fix that makes `src` a real importable package. It backs the `arena-scrape`
-# surface only — the rest of the core CLI still runs on a bare interpreter with
-# nothing installed. A dependency in a security tool joins every engagement's supply
-# chain, so nothing is ever added (or re-pinned) without the same protocol:
-# the exact-commit pin in `uv.lock`, this comment, README.md, docs/SAFETY.md, the
-# no-dependencies CI job, and `tests/framework/test_safety_invariants.py` — all in
-# the same commit.
-dependencies = [
-    "grayswan-scraper @ git+https://github.com/siddicky/gs-submissions.git@7a11e78d803189d598b5997961a9c6757b9f6ca4",
-]
+# The runtime dependency policy: zero runtime dependencies. The core CLI runs on
+# the standard library alone, so a bare `python -m redteam` works on a jump host
+# with nothing installed. A dependency in a security tool joins every engagement's
+# supply chain, so nothing is ever added without the same protocol: the entry in
+# `uv.lock`, this comment, README.md, docs/SAFETY.md, the no-dependencies CI job,
+# and `tests/framework/test_safety_invariants.py` — all in the same commit.
+dependencies = []
 
 [project.optional-dependencies]
 dspy = ['dspy[optuna]>=3.3.1,<4; python_version < "3.15"']

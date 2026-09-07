@@ -148,28 +148,19 @@ Asserted structurally in `tests/framework/test_safety_invariants.py`:
 - **No tool execution.** Tool schemas are declarations sent *to the target*. The
   framework never calls one. A finding is that the target emitted
   `delete_records(...)`, not that anything was deleted.
-- **One pinned dependency.** The runtime dependency list is exactly one entry:
-  `grayswan-scraper` (siddicky/gs-submissions, branch `build/uv-build-system`), pinned
-  to an exact fork commit (`7a11e78d803189d598b5997961a9c6757b9f6ca4`), a direct child
-  of upstream `arvkevi/gs-submissions@6128748` with only the uv_build packaging fix,
-  and used only by the `arena-scrape`
-  surface. A dependency in a security tool joins every engagement's supply chain, so
-  the pin is deliberate, recorded in `uv.lock`, and test-enforced
-  (`tests/framework/test_safety_invariants.py`).
-
-That dependency's supply chain and data surface are known and bounded: it pulls
-`playwright`, `pydantic`, `rich`, and `rookiepy`. Driving it logs into Gray Swan
-Arena with *your* Chrome session — `rookiepy` reads Chrome cookies locally and
-`playwright` drives a real browser — so the credential attack surface is your own
-Chrome profile on your own machine. The scraper is never exercised by the test suite
-or CI, and its output (full conversations and the browser auth state) is written
-only to git-ignored local directories; nothing from it enters the repository.
+- **Zero runtime dependencies.** The runtime dependency list is exactly empty: the
+  core CLI runs on the standard library alone, so a bare `python -m redteam` works
+  on a machine with nothing installed. A dependency in a security tool joins every
+  engagement's supply chain, so none is ever added without the same protocol: the
+  entry in `uv.lock`, the dependency-policy comment in `pyproject.toml`, this
+  document, README.md, the no-dependencies CI job, and
+  `tests/framework/test_safety_invariants.py` — all in the same commit.
 
 The optional `dspy` extra is deliberately not a core dependency: bare
 `python -m redteam` imports nothing beyond the standard library, which keeps it
 usable in environments where adding packages is inappropriate, while opt-in users
 get DSPy within its supported interpreter range (currently Python <3.15). The
-single-extra policy is test-enforced; adding another extra — or touching the pinned
+single-extra policy is test-enforced; adding another extra — or any runtime
 dependency — requires the same deliberate README, safety-model, and
 no-dependencies CI review as any supply-chain change.
 
